@@ -1,8 +1,8 @@
+
 import { supabase } from './supabaseClient';
 import { Poem, Category } from "../types";
 
 export const getPoems = async (): Promise<Poem[]> => {
-  // Order by date descending directly in the database query
   const { data, error } = await supabase
     .from('poems')
     .select('*')
@@ -31,14 +31,29 @@ export const getPoemById = async (id: string): Promise<Poem | undefined> => {
 };
 
 export const savePoem = async (poem: Poem): Promise<void> => {
-  // Use upsert for atomic insert/update operation based on 'id'
-  const { error } = await supabase
-    .from('poems')
-    .upsert(poem, { onConflict: 'id' });
+  // Logic Fix:
+  // If the ID is a long timestamp string (created by Date.now() in frontend),
+  // AND we are inserting, we should REMOVE the ID so Supabase generates a proper BigInt ID.
+  // If it's an update (editing an existing poem), the ID will be a real DB ID (usually smaller number or UUID).
 
-  if (error) {
-    console.error("Save poem error:", error);
-    throw error;
+  const isNewPoem = poem.id.length > 10; // Simple heuristic: timestamps are long, DB IDs start small
+
+  if (isNewPoem) {
+    // Insert New (Exclude ID)
+    const { id, ...poemData } = poem;
+    const { error } = await supabase
+      .from('poems')
+      .insert([poemData]);
+      
+    if (error) throw error;
+  } else {
+    // Update Existing
+    const { error } = await supabase
+      .from('poems')
+      .update(poem)
+      .eq('id', poem.id);
+
+    if (error) throw error;
   }
 };
 
@@ -52,7 +67,6 @@ export const deletePoem = async (id: string): Promise<void> => {
 };
 
 export const toggleLike = async (id: string): Promise<number> => {
-  // 1. Get current likes
   const { data: poem, error: fetchError } = await supabase
     .from('poems')
     .select('likes')
@@ -63,7 +77,6 @@ export const toggleLike = async (id: string): Promise<number> => {
 
   const newLikes = (poem.likes || 0) + 1;
 
-  // 2. Update likes
   const { error: updateError } = await supabase
     .from('poems')
     .update({ likes: newLikes })
@@ -82,7 +95,6 @@ export const getCategories = async (): Promise<Category[]> => {
     .select('name');
 
   if (error) {
-    // If table is empty or error, return empty array gracefully
     console.error('Error fetching categories:', error);
     return [];
   }
@@ -91,7 +103,6 @@ export const getCategories = async (): Promise<Category[]> => {
 };
 
 export const addCategory = async (categoryName: string): Promise<boolean> => {
-  // Check existence first to avoid duplicate key errors if not handled by DB
   const categories = await getCategories();
   if (categories.includes(categoryName)) return false;
 
@@ -104,42 +115,32 @@ export const addCategory = async (categoryName: string): Promise<boolean> => {
 };
 
 export const updateCategory = async (oldName: string, newName: string): Promise<boolean> => {
-  // 1. Update Category Table
   const { error: catError } = await supabase
     .from('categories')
     .update({ name: newName })
     .eq('name', oldName);
   
-  if (catError) {
-    console.error("Update category error", catError);
-    return false;
-  }
+  if (catError) return false;
 
-  // 2. Update Poems with this category
   const { error: poemError } = await supabase
     .from('poems')
     .update({ category: newName })
     .eq('category', oldName);
 
-  if (poemError) console.error("Update poem category error", poemError);
-
   return !poemError;
 };
 
 export const deleteCategory = async (categoryName: string): Promise<void> => {
-  // 1. Ensure 'Kategorisiz' exists for reassignment
   const cats = await getCategories();
   if (!cats.includes('Kategorisiz')) {
      await addCategory('Kategorisiz');
   }
 
-  // 2. Reassign poems to 'Kategorisiz'
   await supabase
     .from('poems')
     .update({ category: 'Kategorisiz' })
     .eq('category', categoryName);
 
-  // 3. Delete from Categories
   const { error } = await supabase
     .from('categories')
     .delete()

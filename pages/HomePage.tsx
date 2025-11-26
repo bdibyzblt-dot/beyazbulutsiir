@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Poem, Category } from '../types';
+import { Poem, Category, SiteSettings } from '../types';
 import { getPoems, getCategories } from '../services/poemService';
 import { getSettings } from '../services/settingsService';
 import PoemCard from '../components/PoemCard';
@@ -9,7 +10,7 @@ const HomePage: React.FC = () => {
   const [poems, setPoems] = useState<Poem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | 'Tümü'>('Tümü');
-  const [settings, setSettings] = useState(getSettings());
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Pagination State for Latest Poems
@@ -19,10 +20,14 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const [poemsData, catsData] = await Promise.all([getPoems(), getCategories()]);
+      const [poemsData, catsData, settingsData] = await Promise.all([
+          getPoems(), 
+          getCategories(),
+          getSettings()
+      ]);
       setPoems(poemsData);
       setCategories(catsData);
-      setSettings(getSettings());
+      setSettings(settingsData);
       setIsLoading(false);
     };
     fetchData();
@@ -48,7 +53,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !settings) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={48} />

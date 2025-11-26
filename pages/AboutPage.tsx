@@ -1,14 +1,27 @@
 
 import React, { useState, useEffect } from 'react';
-import { Feather, BookOpen, Coffee } from 'lucide-react';
+import { Feather, BookOpen, Coffee, Loader2 } from 'lucide-react';
 import { getSettings } from '../services/settingsService';
+import { SiteSettings } from '../types';
 
 const AboutPage: React.FC = () => {
-  const [settings, setSettings] = useState(getSettings());
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
 
   useEffect(() => {
-    setSettings(getSettings());
+    const load = async () => {
+        const s = await getSettings();
+        setSettings(s);
+    };
+    load();
   }, []);
+
+  if (!settings) {
+      return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+            <Loader2 className="animate-spin text-accent" size={48} />
+        </div>
+      );
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-12 md:py-20 space-y-16">

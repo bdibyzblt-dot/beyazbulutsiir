@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
@@ -51,19 +52,28 @@ const PoemEditor: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    const newPoem: Poem = {
-      id: id || Date.now().toString(),
-      title,
-      content,
-      author: author || 'Yönetici',
-      category: selectedCategory,
-      likes: likes,
-      date: date || new Date().toLocaleDateString('tr-TR')
-    };
     
-    await savePoem(newPoem);
-    setIsSaving(false);
-    navigate('/admin');
+    try {
+      const newPoem: Poem = {
+        // If it's a new poem, give it a timestamp ID temporarily for the frontend,
+        // but the service will handle removing it for DB insertion.
+        id: id || Date.now().toString(),
+        title,
+        content,
+        author: author || 'Yönetici',
+        category: selectedCategory,
+        likes: likes,
+        date: date || new Date().toLocaleDateString('tr-TR')
+      };
+      
+      await savePoem(newPoem);
+      navigate('/admin');
+    } catch (error) {
+      console.error("Save failed", error);
+      alert("Şiir kaydedilirken bir hata oluştu. Lütfen bağlantınızı kontrol edin.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

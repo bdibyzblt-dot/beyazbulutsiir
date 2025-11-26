@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Globe, LayoutTemplate, Quote } from 'lucide-react';
+import { ArrowLeft, Save, Globe, LayoutTemplate, Quote, Loader2 } from 'lucide-react';
 import { isAuthenticated } from '../../services/authService';
 import { getSettings, saveSettings } from '../../services/settingsService';
 import { SiteSettings } from '../../types';
@@ -8,13 +9,21 @@ import { SiteSettings } from '../../types';
 const SettingsManager: React.FC = () => {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/admin');
       return;
     }
-    setSettings(getSettings());
+    const load = async () => {
+      setIsLoading(true);
+      const data = await getSettings();
+      setSettings(data);
+      setIsLoading(false);
+    };
+    load();
   }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -26,13 +35,28 @@ const SettingsManager: React.FC = () => {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (settings) {
-      saveSettings(settings);
-      alert('Site ayarları başarıyla güncellendi!');
+      setIsSaving(true);
+      const success = await saveSettings(settings);
+      setIsSaving(false);
+      
+      if (success) {
+        alert('Site ayarları başarıyla güncellendi!');
+      } else {
+        alert('Ayarlar kaydedilirken bir hata oluştu.');
+      }
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-20">
+         <Loader2 className="animate-spin text-accent" size={48} />
+      </div>
+    );
+  }
 
   if (!settings) return null;
 
@@ -152,8 +176,9 @@ const SettingsManager: React.FC = () => {
         </div>
 
         <div className="md:col-span-2 pt-4 flex justify-end">
-             <button type="submit" className="bg-accent text-white px-8 py-4 rounded-sm hover:bg-blue-300 transition-colors uppercase tracking-widest text-xs font-bold flex items-center gap-2">
-                <Save size={18} /> Ayarları Kaydet
+             <button disabled={isSaving} type="submit" className="bg-accent text-white px-8 py-4 rounded-sm hover:bg-blue-300 transition-colors uppercase tracking-widest text-xs font-bold flex items-center gap-2">
+                {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} 
+                {isSaving ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
              </button>
         </div>
 

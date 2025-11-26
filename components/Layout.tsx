@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Cloud, Menu, X, User, ChevronDown } from 'lucide-react';
@@ -12,7 +13,19 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [settings, setSettings] = useState<SiteSettings>(getSettings());
+  
+  // Default fallback until loaded
+  const [settings, setSettings] = useState<SiteSettings>({
+      siteName: "BEYAZBULUT",
+      heroTitle: "",
+      heroHighlight: "",
+      heroSubtitle: "",
+      footerQuote: "",
+      footerCopyright: "",
+      aboutTitle: "",
+      aboutQuote: ""
+  });
+  
   const location = useLocation();
 
   useEffect(() => {
@@ -23,17 +36,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
     fetchCats();
     
-    // Initial fetch of settings
-    setSettings(getSettings());
-
-    const handleSettingsUpdate = () => {
-       setSettings(getSettings());
+    // Async load settings
+    const loadSettings = async () => {
+        const s = await getSettings();
+        setSettings(s);
     };
-    window.addEventListener('settingsUpdated', handleSettingsUpdate);
+    loadSettings();
 
-    return () => {
-      window.removeEventListener('settingsUpdated', handleSettingsUpdate);
-    };
   }, [location]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
