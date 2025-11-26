@@ -32,28 +32,42 @@ export const getPoemById = async (id: string): Promise<Poem | undefined> => {
 
 export const savePoem = async (poem: Poem): Promise<void> => {
   // Logic Fix:
-  // If the ID is a long timestamp string (created by Date.now() in frontend),
-  // AND we are inserting, we should REMOVE the ID so Supabase generates a proper BigInt ID.
-  // If it's an update (editing an existing poem), the ID will be a real DB ID (usually smaller number or UUID).
+  // If ID is very long (timestamp string from frontend) -> It's NEW -> Insert without ID
+  // If ID is short/number (from DB) -> It's EXISTING -> Update with ID
+  
+  // We check if the ID looks like a timestamp (e.g., "1709..." which is 13 chars)
+  const isFrontendId = poem.id.length > 10; 
 
-  const isNewPoem = poem.id.length > 10; // Simple heuristic: timestamps are long, DB IDs start small
-
-  if (isNewPoem) {
-    // Insert New (Exclude ID)
+  if (isFrontendId) {
+    // INSERT NEW: We MUST remove the 'id' field so Supabase auto-generates it.
     const { id, ...poemData } = poem;
+    
     const { error } = await supabase
       .from('poems')
       .insert([poemData]);
       
-    if (error) throw error;
+    if (error) {
+        console.error("Insert Error:", error);
+        throw error;
+    }
   } else {
-    // Update Existing
+    // UPDATE EXISTING
     const { error } = await supabase
       .from('poems')
-      .update(poem)
+      .update({
+          title: poem.title,
+          content: poem.content,
+          author: poem.author,
+          category: poem.category,
+          date: poem.date,
+          likes: poem.likes
+      })
       .eq('id', poem.id);
 
-    if (error) throw error;
+    if (error) {
+        console.error("Update Error:", error);
+        throw error;
+    }
   }
 };
 
@@ -131,16 +145,19 @@ export const updateCategory = async (oldName: string, newName: string): Promise<
 };
 
 export const deleteCategory = async (categoryName: string): Promise<void> => {
+  // Ensure fallback category exists
   const cats = await getCategories();
   if (!cats.includes('Kategorisiz')) {
      await addCategory('Kategorisiz');
   }
 
+  // Move poems
   await supabase
     .from('poems')
     .update({ category: 'Kategorisiz' })
     .eq('category', categoryName);
 
+  // Delete category
   const { error } = await supabase
     .from('categories')
     .delete()

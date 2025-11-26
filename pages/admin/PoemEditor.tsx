@@ -68,9 +68,9 @@ const PoemEditor: React.FC = () => {
       
       await savePoem(newPoem);
       navigate('/admin');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Save failed", error);
-      alert("Şiir kaydedilirken bir hata oluştu. Lütfen bağlantınızı kontrol edin.");
+      alert(`Şiir kaydedilirken bir hata oluştu: ${error.message || 'Bilinmeyen hata'}. Lütfen veritabanı izinlerini kontrol edin.`);
     } finally {
       setIsSaving(false);
     }

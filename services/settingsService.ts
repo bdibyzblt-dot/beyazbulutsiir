@@ -22,15 +22,11 @@ export const getSettings = async (): Promise<SiteSettings> => {
       .single();
 
     if (error || !data) {
-      console.warn("Settings fetch error or no data, using default.", error);
+      // Don't log error to console to keep it clean if table is just empty
       return DEFAULT_SETTINGS;
     }
     
-    // Convert DB keys (snake_case) to App keys (camelCase) if necessary, 
-    // BUT Supabase usually returns column names as defined. 
-    // We defined columns as snake_case in SQL: site_name, hero_title...
-    // We need to map them to SiteSettings interface.
-    
+    // Convert DB keys (snake_case) to App keys (camelCase)
     return {
       siteName: data.site_name || DEFAULT_SETTINGS.siteName,
       heroTitle: data.hero_title || DEFAULT_SETTINGS.heroTitle,

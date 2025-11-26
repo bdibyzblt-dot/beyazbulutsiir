@@ -43,7 +43,7 @@ const SettingsManager: React.FC = () => {
       setIsSaving(false);
       
       if (success) {
-        alert('Site ayarları başarıyla güncellendi!');
+        alert('Site ayarları başarıyla veritabanına kaydedildi!');
       } else {
         alert('Ayarlar kaydedilirken bir hata oluştu.');
       }
