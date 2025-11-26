@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
+import SiteLayout from './components/SiteLayout';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
@@ -15,7 +14,7 @@ import CategoryPage from './pages/CategoryPage';
 const App: React.FC = () => {
   return (
     <Router>
-      <Layout>
+      <SiteLayout>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
@@ -30,7 +29,7 @@ const App: React.FC = () => {
           <Route path="/admin/edit/:id" element={<PoemEditor />} />
           <Route path="/admin/settings" element={<SettingsManager />} />
         </Routes>
-      </Layout>
+      </SiteLayout>
     </Router>
   );
 };
