@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Globe, LayoutTemplate, Quote, Loader2, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Globe, LayoutTemplate, Quote, Loader2, FileText, Sparkles, Lock, Eye, EyeOff } from 'lucide-react';
 import { isAuthenticated } from '../../services/authService';
 import { getSettings, saveSettings } from '../../services/settingsService';
 import { SiteSettings } from '../../types';
@@ -11,6 +11,7 @@ const SettingsManager: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -74,42 +75,77 @@ const SettingsManager: React.FC = () => {
 
       <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
-        {/* Branding */}
-        <div className="bg-white p-6 rounded-sm border border-secondary/20 shadow-sm space-y-6 h-fit">
-           <h3 className="font-serif text-lg flex items-center gap-2 border-b border-secondary/10 pb-2 mb-4">
-              <Globe size={18} className="text-accent" /> Marka & Logo
-           </h3>
-           <div>
-              <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Logo Metni</label>
-              <input 
-                name="siteName"
-                value={settings.siteName}
-                onChange={handleChange}
-                className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink font-serif"
-              />
-           </div>
-           
-           <h3 className="font-serif text-lg flex items-center gap-2 border-b border-secondary/10 pb-2 mb-4 mt-8">
-              <LayoutTemplate size={18} className="text-accent" /> Footer Alanı
-           </h3>
-           <div>
-              <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Footer Alıntısı</label>
-              <input 
-                name="footerQuote"
-                value={settings.footerQuote}
-                onChange={handleChange}
-                className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink text-sm italic"
-              />
-           </div>
-           <div>
-              <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Telif Hakkı Metni</label>
-              <input 
-                name="footerCopyright"
-                value={settings.footerCopyright}
-                onChange={handleChange}
-                className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink text-sm"
-              />
-           </div>
+        <div className="space-y-8">
+            {/* Branding */}
+            <div className="bg-white p-6 rounded-sm border border-secondary/20 shadow-sm space-y-6 h-fit">
+              <h3 className="font-serif text-lg flex items-center gap-2 border-b border-secondary/10 pb-2 mb-4">
+                  <Globe size={18} className="text-accent" /> Marka & Logo
+              </h3>
+              <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Logo Metni</label>
+                  <input 
+                    name="siteName"
+                    value={settings.siteName}
+                    onChange={handleChange}
+                    className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink font-serif"
+                  />
+              </div>
+              
+              <h3 className="font-serif text-lg flex items-center gap-2 border-b border-secondary/10 pb-2 mb-4 mt-8">
+                  <LayoutTemplate size={18} className="text-accent" /> Footer Alanı
+              </h3>
+              <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Footer Alıntısı</label>
+                  <input 
+                    name="footerQuote"
+                    value={settings.footerQuote}
+                    onChange={handleChange}
+                    className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink text-sm italic"
+                  />
+              </div>
+              <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Telif Hakkı Metni</label>
+                  <input 
+                    name="footerCopyright"
+                    value={settings.footerCopyright}
+                    onChange={handleChange}
+                    className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink text-sm"
+                  />
+              </div>
+            </div>
+
+            {/* AI Settings */}
+            <div className="bg-white p-6 rounded-sm border border-accent/20 shadow-md space-y-6 h-fit relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-accent/5 rounded-bl-full -z-0"></div>
+                <h3 className="font-serif text-lg flex items-center gap-2 border-b border-secondary/10 pb-2 mb-4 relative z-10">
+                  <Sparkles size={18} className="text-accent" /> Yapay Zeka Ayarları
+                </h3>
+                <div className="relative z-10">
+                  <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2 flex items-center gap-1">
+                     <Lock size={10} /> Google Gemini API Key
+                  </label>
+                  <div className="relative">
+                    <input 
+                        name="geminiApiKey"
+                        type={showApiKey ? "text" : "password"}
+                        value={settings.geminiApiKey || ''}
+                        onChange={handleChange}
+                        placeholder="AI-xxxxxxxxxxxxxxxxxxx"
+                        className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink font-mono text-xs pr-10"
+                    />
+                    <button 
+                        type="button" 
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-accent transition-colors"
+                    >
+                        {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-2 leading-relaxed">
+                     Şiir üretmek için gerekli olan API anahtarı. <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-accent hover:underline">Buradan alabilirsiniz.</a>
+                  </p>
+                </div>
+            </div>
         </div>
 
         {/* Hero & Pages */}

@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Loader2, Save, Wand2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, Save, Wand2, Settings, AlertTriangle } from 'lucide-react';
 import { generatePoemWithAI } from '../../services/geminiService';
 import { getCategories, savePoem } from '../../services/poemService';
+import { getSettings } from '../../services/settingsService';
 import { isAuthenticated } from '../../services/authService';
 import { Poem } from '../../types';
 
@@ -15,6 +17,8 @@ const AIPoemGenerator: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedData, setGeneratedData] = useState<{title: string, content: string} | null>(null);
+  const [hasApiKey, setHasApiKey] = useState(true);
+  const [loadingCheck, setLoadingCheck] = useState(true);
 
   // Editing State (After generation)
   const [finalTitle, setFinalTitle] = useState('');
@@ -26,15 +30,33 @@ const AIPoemGenerator: React.FC = () => {
       navigate('/admin');
       return;
     }
-    const loadCats = async () => {
-        const cats = await getCategories();
+    const loadInit = async () => {
+        setLoadingCheck(true);
+        const [cats, settings] = await Promise.all([
+             getCategories(),
+             getSettings()
+        ]);
+        
+        // Check for API Key in settings or Vite env
+        const key = settings.geminiApiKey;
+        // Safe check for env var in Vite
+        // @ts-ignore
+        const envKey = (import.meta.env && import.meta.env.VITE_GEMINI_KEY) || '';
+        
+        if (!key && !envKey) {
+            setHasApiKey(false);
+        } else {
+            setHasApiKey(true);
+        }
+
         setCategories(cats);
         if(cats.length > 0) {
             setSelectedCategory(cats[0]);
             setFinalCategory(cats[0]);
         }
+        setLoadingCheck(false);
     }
-    loadCats();
+    loadInit();
   }, [navigate]);
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -56,7 +78,7 @@ const AIPoemGenerator: React.FC = () => {
       // If user typed a prompt, we stick to selected category for saving, or user can change it
       setFinalCategory(selectedCategory);
     } else {
-      alert("Şiir oluşturulamadı. Lütfen tekrar deneyin.");
+      alert("Şiir oluşturulamadı. Lütfen tekrar deneyin veya API anahtarınızı kontrol edin.");
     }
   };
 
@@ -77,6 +99,34 @@ const AIPoemGenerator: React.FC = () => {
     alert('Şiir başarıyla kaydedildi!');
     navigate('/admin');
   };
+
+  if (loadingCheck) {
+      return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+            <Loader2 className="animate-spin text-accent" size={48} />
+        </div>
+      );
+  }
+
+  if (!hasApiKey) {
+      return (
+        <div className="max-w-2xl mx-auto space-y-8 animate-fade-in pb-20 pt-20">
+            <div className="bg-yellow-50 border border-yellow-100 rounded-sm p-8 text-center space-y-4">
+                <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto border border-yellow-200">
+                    <AlertTriangle size={32} className="text-yellow-500" />
+                </div>
+                <h2 className="font-serif text-2xl text-ink">API Anahtarı Eksik</h2>
+                <p className="text-stone-500">
+                    Yapay zeka özelliğini kullanabilmek için Google Gemini API anahtarına ihtiyacınız var.
+                    Lütfen ayarlar sayfasına gidip geçerli bir anahtar girin.
+                </p>
+                <Link to="/admin/settings" className="inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-sm font-bold uppercase text-xs tracking-wider hover:bg-blue-300 transition-colors">
+                    <Settings size={16} /> Ayarlara Git
+                </Link>
+            </div>
+        </div>
+      );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">

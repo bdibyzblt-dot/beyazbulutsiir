@@ -12,7 +12,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   aboutTitle: "Hikayemiz",
   aboutQuote: "\"Her kelime, ruhun bir yansımasıdır.\"",
   aboutTextPrimary: "Modern dünyanın gürültüsünden ve hızından yorulan ruhlar için sığınacak bir liman arayışıyla yola çıktık. BEYAZBULUT, ismini gökyüzünün en saf, en hafif ve en özgür halinden alır. Burada zaman yavaşlar, duygular derinleşir ve kelimeler hak ettiği değeri bulur.",
-  aboutTextSecondary: "Amacımız, sadece şiir okumak değil; şiiri hissetmek, yaşamak ve paylaşmak isteyenleri, kağıt kokulu dijital bir atmosferde buluşturmaktır."
+  aboutTextSecondary: "Amacımız, sadece şiir okumak değil; şiiri hissetmek, yaşamak ve paylaşmak isteyenleri, kağıt kokulu dijital bir atmosferde buluşturmaktır.",
+  geminiApiKey: ""
 };
 
 export const getSettings = async (): Promise<SiteSettings> => {
@@ -38,7 +39,8 @@ export const getSettings = async (): Promise<SiteSettings> => {
       aboutTitle: data.about_title || DEFAULT_SETTINGS.aboutTitle,
       aboutQuote: data.about_quote || DEFAULT_SETTINGS.aboutQuote,
       aboutTextPrimary: data.about_text_primary || DEFAULT_SETTINGS.aboutTextPrimary,
-      aboutTextSecondary: data.about_text_secondary || DEFAULT_SETTINGS.aboutTextSecondary
+      aboutTextSecondary: data.about_text_secondary || DEFAULT_SETTINGS.aboutTextSecondary,
+      geminiApiKey: data.gemini_api_key || ""
     };
   } catch (e) {
     return DEFAULT_SETTINGS;
@@ -57,7 +59,8 @@ export const saveSettings = async (settings: SiteSettings): Promise<boolean> => 
     about_title: settings.aboutTitle,
     about_quote: settings.aboutQuote,
     about_text_primary: settings.aboutTextPrimary,
-    about_text_secondary: settings.aboutTextSecondary
+    about_text_secondary: settings.aboutTextSecondary,
+    gemini_api_key: settings.geminiApiKey
   };
 
   // Check if a row exists

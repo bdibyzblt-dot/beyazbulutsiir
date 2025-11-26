@@ -123,11 +123,11 @@ const UserManager: React.FC = () => {
                      </div>
                      <div>
                         <p className="font-serif text-ink">{user.username}</p>
-                        {currentUser?.username === user.username && <span className="text-[10px] bg-accent/10 text-accent px-2 rounded-full">Siz</span>}
+                        {currentUser?.id === user.id && <span className="text-[10px] bg-accent/10 text-accent px-2 rounded-full">Siz</span>}
                      </div>
                   </div>
                   
-                  {currentUser?.username !== user.username && (
+                  {currentUser?.id !== user.id && (
                     <button 
                       onClick={() => handleDelete(user.id, user.username)}
                       className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"

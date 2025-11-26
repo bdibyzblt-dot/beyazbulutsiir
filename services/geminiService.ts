@@ -1,7 +1,8 @@
 
 import { GoogleGenAI } from "@google/genai";
+import { getSettings } from "./settingsService";
 
-// Helper for env vars
+// Helper for env vars (Fallback only)
 const getEnv = (key: string) => {
   // @ts-ignore
   if (typeof import.meta !== 'undefined' && import.meta.env) {
@@ -16,19 +17,24 @@ const getEnv = (key: string) => {
   return '';
 };
 
-const apiKey = getEnv('VITE_GEMINI_KEY') || getEnv('API_KEY') || '';
-
-// Initialize the client safely
-let ai: GoogleGenAI | null = null;
-if (apiKey) {
-  ai = new GoogleGenAI({ apiKey });
-}
-
 export const generatePoemWithAI = async (promptInput: string, isCategory: boolean = false): Promise<{ title: string; content: string } | null> => {
-  if (!ai) {
-    console.error("API Key not found (VITE_GEMINI_KEY)");
+  
+  // 1. Try fetching from Database Settings
+  const settings = await getSettings();
+  let apiKey = settings.geminiApiKey;
+
+  // 2. Fallback to Env Var if DB key is empty
+  if (!apiKey) {
+    apiKey = getEnv('VITE_GEMINI_KEY') || getEnv('API_KEY') || '';
+  }
+
+  if (!apiKey) {
+    console.error("API Key not found in Settings or Environment");
     return null;
   }
+
+  // Initialize client with the dynamic key
+  const ai = new GoogleGenAI({ apiKey });
 
   try {
     let userInstruction = "";
