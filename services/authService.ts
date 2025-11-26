@@ -1,29 +1,59 @@
+
 import { supabase } from './supabaseClient';
 
 const AUTH_KEY = 'beyazbulut_auth_token';
 const USER_INFO_KEY = 'beyazbulut_admin_user';
 
-// Login now checks the database
-export const login = async (username: string, password: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('username', username)
-      .eq('password', password) // Note: In a real production app, passwords should be hashed!
-      .single();
+interface LoginResult {
+  success: boolean;
+  message?: string;
+}
 
-    if (error || !data) {
-      return false;
+// Login now attempts both secure RPC and direct table access to ensure admin can get in
+export const login = async (username: string, password: string): Promise<LoginResult> => {
+  try {
+    // 1. Yöntem: Güvenli RPC Fonksiyonu (En İyisi)
+    const { data: rpcData, error: rpcError } = await supabase.rpc('login_admin', {
+      input_username: username,
+      input_password: password
+    });
+
+    if (!rpcError && rpcData && rpcData.success) {
+       localStorage.setItem(AUTH_KEY, 'true');
+       localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: rpcData.username, id: rpcData.id }));
+       return { success: true };
     }
 
-    // Success
-    localStorage.setItem(AUTH_KEY, 'true');
-    localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: data.username, id: data.id }));
-    return true;
-  } catch (err) {
-    console.error("Login error:", err);
-    return false;
+    // 2. Yöntem: Direkt Tablo Sorgusu (Yedek)
+    // Eğer kullanıcı RPC fonksiyonunu oluşturmadıysa veya RLS kapalıysa bu çalışır.
+    if (rpcError) {
+        console.warn("RPC Login başarısız, direkt tablo sorgusu deneniyor...", rpcError.message);
+        
+        const { data: selectData, error: selectError } = await supabase
+            .from('admin_users')
+            .select('*')
+            .eq('username', username)
+            .eq('password', password)
+            .maybeSingle();
+
+        if (!selectError && selectData) {
+            localStorage.setItem(AUTH_KEY, 'true');
+            localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: selectData.username, id: selectData.id }));
+            return { success: true };
+        }
+        
+        if (selectError) {
+             console.error("Tablo sorgu hatası:", selectError);
+             return { success: false, message: `Veritabanı Hatası: ${selectError.message}` };
+        }
+    }
+
+    // İki yöntem de çalıştı ama kullanıcı bulunamadıysa:
+    return { success: false, message: "Kullanıcı adı veya şifre hatalı." };
+
+  } catch (err: any) {
+    console.error("Login critical error:", err);
+    return { success: false, message: `Beklenmeyen Hata: ${err.message || 'Bilinmiyor'}` };
   }
 };
 

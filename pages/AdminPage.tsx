@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User } from 'lucide-react';
+import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle } from 'lucide-react';
 import { Poem } from '../types';
 import { getPoems, deletePoem, getCategories } from '../services/poemService';
 import { login, logout, isAuthenticated } from '../services/authService';
@@ -12,6 +13,7 @@ const AdminPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState('');
   
   const [isAuth, setIsAuth] = useState(false);
   const [poems, setPoems] = useState<Poem[]>([]);
@@ -44,16 +46,17 @@ const AdminPage: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
+    setLoginError('');
     
-    const success = await login(username, password);
+    const result = await login(username, password);
     
     setIsLoggingIn(false);
     
-    if (success) {
+    if (result.success) {
       setIsAuth(true);
       loadDashboardData();
     } else {
-      alert('Hatalı kullanıcı adı veya şifre!');
+      setLoginError(result.message || 'Giriş başarısız.');
     }
   };
 
@@ -95,6 +98,13 @@ const AdminPage: React.FC = () => {
             <h2 className="font-serif text-2xl text-ink">Yönetici Girişi</h2>
             <div className="h-0.5 w-12 bg-accent mx-auto mt-4"></div>
           </div>
+          
+          {loginError && (
+            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-sm text-sm flex items-start gap-2">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <span>{loginError}</span>
+            </div>
+          )}
           
           <div className="space-y-4">
             <div>
@@ -237,7 +247,7 @@ const AdminPage: React.FC = () => {
                     {filteredPoems.map(poem => (
                         <tr 
                             key={poem.id} 
-                            className={`transition-colors ${searchTerm ? 'bg-stone-100' : 'hover:bg-secondary/5'}`}
+                            className={`transition-colors relative z-0 ${searchTerm ? 'bg-stone-100' : 'hover:bg-secondary/5'}`}
                         >
                             <td className="p-4">
                             <div className="font-medium text-ink">{poem.title}</div>
@@ -252,14 +262,14 @@ const AdminPage: React.FC = () => {
                             <td className="p-4 text-right space-x-2 relative z-10">
                             <button 
                                 onClick={(e) => handleEditConfirm(e, poem.id, poem.title)}
-                                className="inline-block p-2 text-blue-400 hover:bg-blue-50 rounded-sm transition-colors cursor-pointer" 
+                                className="inline-block p-2 text-blue-400 hover:bg-blue-50 rounded-sm transition-colors cursor-pointer relative z-20" 
                                 title="Düzenle"
                             >
                                 <Edit size={16} />
                             </button>
                             <button 
                                 onClick={(e) => handleDeletePoem(e, poem.id, poem.title)} 
-                                className="inline-block p-2 text-red-400 hover:bg-red-50 rounded-sm transition-colors cursor-pointer" 
+                                className="inline-block p-2 text-red-400 hover:bg-red-50 rounded-sm transition-colors cursor-pointer relative z-20" 
                                 title="Sil"
                             >
                                 <Trash2 size={16} />
