@@ -1,11 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Support both standard Vite env vars and potential direct process.env usage
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY || '';
+// Retrieve env vars directly
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.VITE_SUPABASE_KEY || '';
+
+// Create client independently of whether keys exist initially to prevent build crashes,
+// but operations will fail gracefully if keys are missing.
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseKey || 'placeholder'
+);
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn('Supabase URL or Key is missing. Please check your Vercel Environment Variables (VITE_SUPABASE_URL, VITE_SUPABASE_KEY).');
+  console.warn('Supabase keys are missing in environment variables. Database features will not work.');
 }
-
-export const supabase = createClient(supabaseUrl, supabaseKey);

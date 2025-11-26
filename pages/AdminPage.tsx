@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2 } from 'lucide-react';
+import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User } from 'lucide-react';
 import { Poem } from '../types';
 import { getPoems, deletePoem, getCategories } from '../services/poemService';
 import { login, logout, isAuthenticated } from '../services/authService';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
+  
+  // Login State
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  
   const [isAuth, setIsAuth] = useState(false);
   const [poems, setPoems] = useState<Poem[]>([]);
   const [stats, setStats] = useState({ poemCount: 0, categoryCount: 0 });
@@ -36,13 +41,19 @@ const AdminPage: React.FC = () => {
     setLoading(false);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(password)) {
+    setIsLoggingIn(true);
+    
+    const success = await login(username, password);
+    
+    setIsLoggingIn(false);
+    
+    if (success) {
       setIsAuth(true);
       loadDashboardData();
     } else {
-      alert('Hatalı şifre!');
+      alert('Hatalı kullanıcı adı veya şifre!');
     }
   };
 
@@ -84,15 +95,45 @@ const AdminPage: React.FC = () => {
             <h2 className="font-serif text-2xl text-ink">Yönetici Girişi</h2>
             <div className="h-0.5 w-12 bg-accent mx-auto mt-4"></div>
           </div>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Şifre"
-            className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:outline-none focus:border-accent text-ink font-sans"
-          />
-          <button type="submit" className="w-full bg-accent text-white py-3 rounded-sm hover:bg-blue-300 transition-colors uppercase tracking-widest text-sm font-bold">
-            Giriş Yap
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-[10px] uppercase tracking-wider text-stone-400 mb-1">Kullanıcı Adı</label>
+              <div className="relative">
+                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full pl-10 pr-3 py-3 bg-background border border-secondary/30 rounded-sm focus:outline-none focus:border-accent text-ink font-sans"
+                  placeholder="Kullanıcı adınız"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-[10px] uppercase tracking-wider text-stone-400 mb-1">Şifre</label>
+              <div className="relative">
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-3 py-3 bg-background border border-secondary/30 rounded-sm focus:outline-none focus:border-accent text-ink font-sans"
+                  placeholder="Şifreniz"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={isLoggingIn}
+            className="w-full bg-accent text-white py-3 rounded-sm hover:bg-blue-300 transition-colors uppercase tracking-widest text-sm font-bold flex justify-center items-center gap-2"
+          >
+            {isLoggingIn ? <Loader2 size={16} className="animate-spin" /> : 'Giriş Yap'}
           </button>
         </form>
       </div>
@@ -130,21 +171,28 @@ const AdminPage: React.FC = () => {
                 <p className="text-4xl font-serif text-ink">{stats.categoryCount}</p>
             </div>
 
-            {/* Action Buttons */}
+            {/* AI Action */}
             <Link to="/admin/ai" className="bg-gradient-to-br from-accent/10 to-accent/5 p-6 rounded-sm border border-accent/20 hover:border-accent/50 transition-all group flex flex-col justify-center items-center text-center cursor-pointer">
                 <Sparkles className="text-accent mb-2 group-hover:scale-110 transition-transform" size={24} />
                 <span className="font-serif text-ink font-medium">Yapay Zeka ile Üret</span>
                 <span className="text-[10px] text-stone-500 mt-1">Hızlı şiir oluştur</span>
             </Link>
             
+            {/* Settings & Tools */}
             <div className="flex flex-col gap-2">
-                <Link to="/admin/categories" className="bg-white p-3 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
-                    <Tag className="text-stone-400 group-hover:text-accent transition-colors" size={18} />
-                    <span className="font-serif text-ink text-sm">Kategoriler</span>
-                </Link>
-                <Link to="/admin/settings" className="bg-white p-3 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
-                    <Settings className="text-stone-400 group-hover:text-accent transition-colors" size={18} />
-                    <span className="font-serif text-ink text-sm">Genel Ayarlar</span>
+                <div className="flex gap-2 flex-1">
+                    <Link to="/admin/categories" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex flex-col items-center justify-center gap-1 text-center cursor-pointer flex-1">
+                        <Tag className="text-stone-400 group-hover:text-accent transition-colors" size={16} />
+                        <span className="font-serif text-ink text-xs">Kategoriler</span>
+                    </Link>
+                    <Link to="/admin/settings" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex flex-col items-center justify-center gap-1 text-center cursor-pointer flex-1">
+                        <Settings className="text-stone-400 group-hover:text-accent transition-colors" size={16} />
+                        <span className="font-serif text-ink text-xs">Ayarlar</span>
+                    </Link>
+                </div>
+                <Link to="/admin/password" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
+                    <Lock className="text-stone-400 group-hover:text-accent transition-colors" size={14} />
+                    <span className="font-serif text-ink text-xs">Şifre Değiştir</span>
                 </Link>
             </div>
         </div>

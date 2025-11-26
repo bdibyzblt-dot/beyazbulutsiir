@@ -5,11 +5,11 @@ import { getCategories } from '../services/poemService';
 import { getSettings } from '../services/settingsService';
 import { Category, SiteSettings } from '../types';
 
-interface LayoutProps {
+interface SiteLayoutProps {
   children: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const SiteLayout: React.FC<SiteLayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(getSettings());
@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
     fetchCats();
     
-    // Initial fetch of settings
+    // Initial fetch of settings (Still local)
     setSettings(getSettings());
 
     const handleSettingsUpdate = () => {
@@ -41,7 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-accent selection:text-white">
-      {/* Header */}
+      {/* Header - Glassmorphism Light */}
       <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-secondary/20 transition-all duration-300 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group" onClick={closeMenu}>
@@ -65,6 +65,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               
               <div className="absolute top-[90%] left-1/2 -translate-x-1/2 pt-4 hidden group-hover:block w-56 animate-fade-in z-50">
                  <div className="bg-white/95 backdrop-blur-md border border-secondary/20 shadow-xl rounded-sm py-2 flex flex-col relative">
+                    
                     {/* CSS Triangle Pointer */}
                     <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-t border-l border-secondary/20 rotate-45 transform"></div>
                     
@@ -149,4 +150,4 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 };
 
-export default Layout;
+export default SiteLayout;
