@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Save, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { isAuthenticated, changePassword } from '../../services/authService';
+import { ArrowLeft, Save, Eye, EyeOff, Loader2, User } from 'lucide-react';
+import { isAuthenticated, updateAdminProfile, getCurrentUser } from '../../services/authService';
 
 const ChangePassword: React.FC = () => {
   const navigate = useNavigate();
+  const [username, setUsername] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -13,31 +15,39 @@ const ChangePassword: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/admin');
+      return;
+    }
+    const user = getCurrentUser();
+    if (user) {
+        setUsername(user.username);
     }
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (newPass.length < 4) {
+    // Validate only if password field is touched
+    if (newPass && newPass.length < 4) {
       alert('Şifre en az 4 karakter olmalıdır.');
       return;
     }
 
-    if (newPass !== confirmPass) {
+    if (newPass && newPass !== confirmPass) {
       alert('Şifreler eşleşmiyor!');
       return;
     }
 
     setIsSaving(true);
-    const success = await changePassword(newPass);
+    const currentUser = getCurrentUser();
+    
+    const success = await updateAdminProfile(currentUser.username, username, newPass);
     setIsSaving(false);
 
     if (success) {
-      alert('Şifreniz başarıyla değiştirildi. Sonraki girişinizde yeni şifrenizi kullanın.');
+      alert('Profiliniz başarıyla güncellendi.');
       navigate('/admin');
     } else {
-      alert('Şifre değiştirilirken bir hata oluştu.');
+      alert('Güncelleme sırasında bir hata oluştu (Kullanıcı adı alınmış olabilir).');
     }
   };
 
@@ -48,25 +58,40 @@ const ChangePassword: React.FC = () => {
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h2 className="font-serif text-3xl text-ink">Şifre Değiştir</h2>
-          <p className="text-stone-400 text-sm">Yönetici paneli giriş güvenliğinizi güncelleyin.</p>
+          <h2 className="font-serif text-3xl text-ink">Profil Düzenle</h2>
+          <p className="text-stone-400 text-sm">Kullanıcı adınızı veya şifrenizi güncelleyin.</p>
         </div>
       </div>
 
       <div className="bg-white p-8 rounded-sm border border-secondary/20 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           
+          <div>
+              <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Kullanıcı Adı</label>
+              <div className="relative">
+                <input 
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink pr-10"
+                  required
+                />
+                <User size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400" />
+              </div>
+            </div>
+
+            <div className="h-px bg-secondary/10 my-4"></div>
+
           <div className="space-y-4">
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Yeni Şifre</label>
+              <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Yeni Şifre (İsteğe Bağlı)</label>
               <div className="relative">
                 <input 
                   type={showPass ? "text" : "password"}
                   value={newPass}
                   onChange={(e) => setNewPass(e.target.value)}
                   className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink pr-10"
-                  placeholder="Yeni şifrenizi girin"
-                  required
+                  placeholder="Değiştirmek istemiyorsanız boş bırakın"
                 />
                 <button 
                   type="button"
@@ -86,7 +111,8 @@ const ChangePassword: React.FC = () => {
                 onChange={(e) => setConfirmPass(e.target.value)}
                 className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink"
                 placeholder="Şifreyi tekrar girin"
-                required
+                disabled={!newPass}
+                required={!!newPass}
               />
             </div>
           </div>

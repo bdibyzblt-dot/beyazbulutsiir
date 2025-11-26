@@ -20,6 +20,8 @@ export interface SiteSettings {
   footerCopyright: string;
   aboutTitle: string;
   aboutQuote: string;
+  aboutTextPrimary: string;
+  aboutTextSecondary: string;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = ['Aşk', 'Hüzün', 'Doğa', 'Özgürlük', 'Nostalji'];

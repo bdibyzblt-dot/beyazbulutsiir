@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle, HelpCircle } from 'lucide-react';
+import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle, HelpCircle, Users } from 'lucide-react';
 import { Poem } from '../types';
 import { getPoems, deletePoem, getCategories } from '../services/poemService';
-import { login, logout, isAuthenticated } from '../services/authService';
+import { login, logout, isAuthenticated, getCurrentUser } from '../services/authService';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const AdminPage: React.FC = () => {
   const [debugInfo, setDebugInfo] = useState('');
   
   const [isAuth, setIsAuth] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{username: string} | null>(null);
   const [poems, setPoems] = useState<Poem[]>([]);
   const [stats, setStats] = useState({ poemCount: 0, categoryCount: 0 });
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,7 @@ const AdminPage: React.FC = () => {
     const authStatus = isAuthenticated();
     setIsAuth(authStatus);
     if (authStatus) {
+      setCurrentUser(getCurrentUser());
       loadDashboardData();
     }
   }, []);
@@ -56,6 +58,7 @@ const AdminPage: React.FC = () => {
     
     if (result.success) {
       setIsAuth(true);
+      setCurrentUser(getCurrentUser());
       loadDashboardData();
     } else {
       setLoginError(result.message || 'Giriş başarısız.');
@@ -66,6 +69,7 @@ const AdminPage: React.FC = () => {
   const handleLogout = () => {
     logout();
     setIsAuth(false);
+    setCurrentUser(null);
     navigate('/');
   };
 
@@ -158,7 +162,7 @@ const AdminPage: React.FC = () => {
           
           <div className="pt-4 border-t border-secondary/10 text-center">
              <p className="text-xs text-stone-400 flex items-center justify-center gap-1">
-               <HelpCircle size={12} /> Varsayılan: admin / admin123
+               <HelpCircle size={12} /> Veritabanı bağlantısı gerektirir
              </p>
           </div>
         </form>
@@ -172,7 +176,9 @@ const AdminPage: React.FC = () => {
       <div className="flex justify-between items-center border-b border-secondary/20 pb-6">
         <div>
            <h2 className="font-serif text-3xl text-ink">Kontrol Paneli</h2>
-           <p className="text-stone-400 text-sm mt-1">Hoşgeldiniz, Yönetici</p>
+           <p className="text-stone-400 text-sm mt-1 flex items-center gap-1">
+             Hoşgeldiniz, <span className="text-accent font-bold">{currentUser?.username || 'Yönetici'}</span>
+           </p>
         </div>
         <button onClick={handleLogout} className="flex items-center gap-2 text-stone-500 hover:text-red-500 text-sm font-sans uppercase tracking-wider transition-colors">
           <LogOut size={16} /> Çıkış
@@ -216,10 +222,16 @@ const AdminPage: React.FC = () => {
                         <span className="font-serif text-ink text-xs">Ayarlar</span>
                     </Link>
                 </div>
-                <Link to="/admin/password" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
-                    <Lock className="text-stone-400 group-hover:text-accent transition-colors" size={14} />
-                    <span className="font-serif text-ink text-xs">Şifre Değiştir</span>
-                </Link>
+                <div className="flex gap-2 flex-1">
+                  <Link to="/admin/profile" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
+                      <User className="text-stone-400 group-hover:text-accent transition-colors" size={14} />
+                      <span className="font-serif text-ink text-xs">Profil</span>
+                  </Link>
+                  <Link to="/admin/users" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
+                      <Users className="text-stone-400 group-hover:text-accent transition-colors" size={14} />
+                      <span className="font-serif text-ink text-xs">Kullanıcılar</span>
+                  </Link>
+                </div>
             </div>
         </div>
 

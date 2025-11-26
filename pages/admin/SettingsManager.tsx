@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Globe, LayoutTemplate, Quote, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Globe, LayoutTemplate, Quote, Loader2, FileText } from 'lucide-react';
 import { isAuthenticated } from '../../services/authService';
 import { getSettings, saveSettings } from '../../services/settingsService';
 import { SiteSettings } from '../../types';
@@ -170,6 +170,31 @@ const SettingsManager: React.FC = () => {
                         value={settings.aboutQuote}
                         onChange={handleChange}
                         className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink italic text-sm"
+                    />
+                </div>
+                
+                <h4 className="font-serif text-md flex items-center gap-2 pt-4 text-stone-600">
+                   <FileText size={16} /> Metin İçeriği
+                </h4>
+                
+                <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Paragraf 1 (Giriş)</label>
+                    <textarea 
+                        name="aboutTextPrimary"
+                        value={settings.aboutTextPrimary}
+                        onChange={handleChange}
+                        rows={5}
+                        className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink text-sm leading-relaxed"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-stone-500 mb-2">Paragraf 2 (Amaç)</label>
+                    <textarea 
+                        name="aboutTextSecondary"
+                        value={settings.aboutTextSecondary}
+                        onChange={handleChange}
+                        rows={4}
+                        className="w-full p-3 bg-background border border-secondary/30 rounded-sm focus:border-accent outline-none text-ink text-sm leading-relaxed"
                     />
                 </div>
             </div>

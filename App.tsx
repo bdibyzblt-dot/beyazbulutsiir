@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -11,6 +12,7 @@ import PoemEditor from './pages/admin/PoemEditor';
 import SettingsManager from './pages/admin/SettingsManager';
 import CategoryPage from './pages/CategoryPage';
 import ChangePassword from './pages/admin/ChangePassword';
+import UserManager from './pages/admin/UserManager';
 
 const App: React.FC = () => {
   return (
@@ -29,7 +31,9 @@ const App: React.FC = () => {
           <Route path="/admin/new" element={<PoemEditor />} />
           <Route path="/admin/edit/:id" element={<PoemEditor />} />
           <Route path="/admin/settings" element={<SettingsManager />} />
-          <Route path="/admin/password" element={<ChangePassword />} />
+          <Route path="/admin/profile" element={<ChangePassword />} />
+          <Route path="/admin/password" element={<ChangePassword />} /> {/* Legacy route support */}
+          <Route path="/admin/users" element={<UserManager />} />
         </Routes>
       </Layout>
     </Router>

@@ -24,7 +24,7 @@ const AboutPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-12 md:py-20 space-y-16">
+    <div className="max-w-4xl mx-auto py-12 md:py-20 space-y-16 animate-fade-in">
       
       {/* Header */}
       <section className="text-center space-y-6">
@@ -39,14 +39,11 @@ const AboutPage: React.FC = () => {
       <section className="grid md:grid-cols-2 gap-12 items-center bg-white p-8 md:p-12 rounded-lg border border-secondary/20 shadow-sm">
         <div className="space-y-6">
           <h2 className="text-2xl font-serif text-ink">Neden {settings.siteName}?</h2>
-          <p className="text-stone-600 font-body leading-loose">
-            Modern dünyanın gürültüsünden ve hızından yorulan ruhlar için sığınacak bir liman arayışıyla yola çıktık. 
-            {settings.siteName}, ismini gökyüzünün en saf, en hafif ve en özgür halinden alır. Burada zaman yavaşlar, 
-            duygular derinleşir ve kelimeler hak ettiği değeri bulur.
+          <p className="text-stone-600 font-body leading-loose whitespace-pre-line">
+            {settings.aboutTextPrimary}
           </p>
-          <p className="text-stone-600 font-body leading-loose">
-            Amacımız, sadece şiir okumak değil; şiiri hissetmek, yaşamak ve paylaşmak isteyenleri, 
-            kağıt kokulu dijital bir atmosferde buluşturmaktır.
+          <p className="text-stone-600 font-body leading-loose whitespace-pre-line">
+            {settings.aboutTextSecondary}
           </p>
         </div>
         <div className="flex justify-center">

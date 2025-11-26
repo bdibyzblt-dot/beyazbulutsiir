@@ -10,12 +10,16 @@ interface LoginResult {
   debugInfo?: string;
 }
 
+export interface AdminUser {
+  id: number;
+  username: string;
+}
+
 export const login = async (username: string, password: string): Promise<LoginResult> => {
   try {
     console.log("Giriş deneniyor...", username);
 
     // 1. Yöntem: Güvenli RPC Fonksiyonu
-    // Eğer kullanıcı 'login_admin' fonksiyonunu oluşturduysa bu en güvenli yoldur.
     const { data: rpcData, error: rpcError } = await supabase.rpc('login_admin', {
       input_username: username,
       input_password: password
@@ -29,10 +33,8 @@ export const login = async (username: string, password: string): Promise<LoginRe
     }
 
     // 2. Yöntem: Direkt Tablo Sorgusu (Yedek)
-    // Eğer RPC fonksiyonu yoksa veya hata verdiyse buraya düşer.
-    // DİKKAT: Bu yöntemin çalışması için Supabase panelinde 'admin_users' tablosunda RLS (Row Level Security) KAPALI olmalıdır.
     if (rpcError) {
-        console.warn("RPC Login başarısız (SQL fonksiyonu eksik olabilir), direkt tablo sorgusu deneniyor...", rpcError.message);
+        console.warn("RPC Login başarısız, direkt tablo sorgusu deneniyor...", rpcError.message);
         
         const { data: selectData, error: selectError } = await supabase
             .from('admin_users')
@@ -49,16 +51,12 @@ export const login = async (username: string, password: string): Promise<LoginRe
         }
         
         if (selectError) {
-             console.error("Tablo sorgu hatası:", selectError);
              return { success: false, message: "Veritabanı bağlantı hatası.", debugInfo: selectError.message };
         }
 
-        // Eğer hata yok ama veri de yoksa: Kullanıcı adı/şifre yanlış VEYA RLS engelliyor.
-        // Bunu anlamak için kullanıcı adını tek başına sorgulayalım (şifresiz).
         const { data: userExists } = await supabase.from('admin_users').select('id').eq('username', username).maybeSingle();
         
         if (!userExists) {
-            // Kullanıcı hiç bulunamadı. Ya yok, ya da RLS engelliyor (çünkü RLS varsa boş döner).
             return { 
                 success: false, 
                 message: "Kullanıcı bulunamadı veya erişim engellendi.", 
@@ -89,18 +87,70 @@ export const getCurrentUser = () => {
   return userStr ? JSON.parse(userStr) : null;
 };
 
-export const changePassword = async (newPassword: string): Promise<boolean> => {
-  const user = getCurrentUser();
-  if (!user || !user.username) return false;
+// --- USER MANAGEMENT FUNCTIONS ---
+
+export const getAllAdmins = async (): Promise<AdminUser[]> => {
+  const { data, error } = await supabase
+    .from('admin_users')
+    .select('id, username')
+    .order('id');
+  
+  if (error) {
+    console.error("Fetch admins error:", error);
+    return [];
+  }
+  return data as AdminUser[];
+};
+
+export const addAdmin = async (username: string, password: string): Promise<{success: boolean, message?: string}> => {
+  // Check if exists
+  const { data: existing } = await supabase.from('admin_users').select('id').eq('username', username).maybeSingle();
+  if (existing) return { success: false, message: "Bu kullanıcı adı zaten kullanılıyor." };
 
   const { error } = await supabase
     .from('admin_users')
-    .update({ password: newPassword })
-    .eq('username', user.username);
+    .insert([{ username, password }]);
 
-  if (error) {
-    console.error("Change password error:", error);
+  if (error) return { success: false, message: error.message };
+  return { success: true };
+};
+
+export const deleteAdmin = async (id: number): Promise<boolean> => {
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.id === id) {
+    alert("Kendinizi silemezsiniz!");
     return false;
   }
+
+  const { error } = await supabase
+    .from('admin_users')
+    .delete()
+    .eq('id', id);
+
+  return !error;
+};
+
+export const updateAdminProfile = async (currentUsername: string, newUsername: string, newPassword?: string): Promise<boolean> => {
+  const updates: any = { username: newUsername };
+  if (newPassword && newPassword.length > 0) {
+    updates.password = newPassword;
+  }
+
+  const { error } = await supabase
+    .from('admin_users')
+    .update(updates)
+    .eq('username', currentUsername);
+
+  if (error) {
+    console.error("Update profile error:", error);
+    return false;
+  }
+
+  // Update local storage if username changed
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.username === currentUsername) {
+     localStorage.setItem(USER_INFO_KEY, JSON.stringify({ ...currentUser, username: newUsername }));
+  }
+
   return true;
 };

@@ -10,7 +10,9 @@ const DEFAULT_SETTINGS: SiteSettings = {
   footerQuote: "\"Kelimelerin hafifliği, ruhun kanatlarıdır.\"",
   footerCopyright: "© 2024 BeyazBulut. Tüm hakları saklıdır.",
   aboutTitle: "Hikayemiz",
-  aboutQuote: "\"Her kelime, ruhun bir yansımasıdır.\""
+  aboutQuote: "\"Her kelime, ruhun bir yansımasıdır.\"",
+  aboutTextPrimary: "Modern dünyanın gürültüsünden ve hızından yorulan ruhlar için sığınacak bir liman arayışıyla yola çıktık. BEYAZBULUT, ismini gökyüzünün en saf, en hafif ve en özgür halinden alır. Burada zaman yavaşlar, duygular derinleşir ve kelimeler hak ettiği değeri bulur.",
+  aboutTextSecondary: "Amacımız, sadece şiir okumak değil; şiiri hissetmek, yaşamak ve paylaşmak isteyenleri, kağıt kokulu dijital bir atmosferde buluşturmaktır."
 };
 
 export const getSettings = async (): Promise<SiteSettings> => {
@@ -22,7 +24,6 @@ export const getSettings = async (): Promise<SiteSettings> => {
       .single();
 
     if (error || !data) {
-      // Don't log error to console to keep it clean if table is just empty
       return DEFAULT_SETTINGS;
     }
     
@@ -36,6 +37,8 @@ export const getSettings = async (): Promise<SiteSettings> => {
       footerCopyright: data.footer_copyright || DEFAULT_SETTINGS.footerCopyright,
       aboutTitle: data.about_title || DEFAULT_SETTINGS.aboutTitle,
       aboutQuote: data.about_quote || DEFAULT_SETTINGS.aboutQuote,
+      aboutTextPrimary: data.about_text_primary || DEFAULT_SETTINGS.aboutTextPrimary,
+      aboutTextSecondary: data.about_text_secondary || DEFAULT_SETTINGS.aboutTextSecondary
     };
   } catch (e) {
     return DEFAULT_SETTINGS;
@@ -52,7 +55,9 @@ export const saveSettings = async (settings: SiteSettings): Promise<boolean> => 
     footer_quote: settings.footerQuote,
     footer_copyright: settings.footerCopyright,
     about_title: settings.aboutTitle,
-    about_quote: settings.aboutQuote
+    about_quote: settings.aboutQuote,
+    about_text_primary: settings.aboutTextPrimary,
+    about_text_secondary: settings.aboutTextSecondary
   };
 
   // Check if a row exists
