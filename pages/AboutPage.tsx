@@ -1,0 +1,89 @@
+
+import React, { useState, useEffect } from 'react';
+import { Feather, BookOpen, Coffee } from 'lucide-react';
+import { getSettings } from '../services/settingsService';
+
+const AboutPage: React.FC = () => {
+  const [settings, setSettings] = useState(getSettings());
+
+  useEffect(() => {
+    setSettings(getSettings());
+  }, []);
+
+  return (
+    <div className="max-w-4xl mx-auto py-12 md:py-20 space-y-16">
+      
+      {/* Header */}
+      <section className="text-center space-y-6">
+        <h1 className="text-4xl md:text-5xl font-serif text-ink">{settings.aboutTitle}</h1>
+        <div className="w-24 h-px bg-secondary mx-auto"></div>
+        <p className="text-xl text-stone-500 max-w-2xl mx-auto font-body italic leading-relaxed">
+          {settings.aboutQuote}
+        </p>
+      </section>
+
+      {/* Content Block 1 */}
+      <section className="grid md:grid-cols-2 gap-12 items-center bg-white p-8 md:p-12 rounded-lg border border-secondary/20 shadow-sm">
+        <div className="space-y-6">
+          <h2 className="text-2xl font-serif text-ink">Neden {settings.siteName}?</h2>
+          <p className="text-stone-600 font-body leading-loose">
+            Modern dünyanın gürültüsünden ve hızından yorulan ruhlar için sığınacak bir liman arayışıyla yola çıktık. 
+            {settings.siteName}, ismini gökyüzünün en saf, en hafif ve en özgür halinden alır. Burada zaman yavaşlar, 
+            duygular derinleşir ve kelimeler hak ettiği değeri bulur.
+          </p>
+          <p className="text-stone-600 font-body leading-loose">
+            Amacımız, sadece şiir okumak değil; şiiri hissetmek, yaşamak ve paylaşmak isteyenleri, 
+            kağıt kokulu dijital bir atmosferde buluşturmaktır.
+          </p>
+        </div>
+        <div className="flex justify-center">
+            <div className="p-8 bg-background rounded-full border border-secondary/20">
+                <Feather size={120} className="text-accent/30" strokeWidth={1} />
+            </div>
+        </div>
+      </section>
+
+      {/* Features / Philosophy */}
+      <section className="grid md:grid-cols-3 gap-8">
+        <div className="text-center p-6 bg-white rounded-lg border border-secondary/20 hover:shadow-md transition-all">
+          <div className="flex justify-center mb-4">
+            <BookOpen className="text-accent" size={32} />
+          </div>
+          <h3 className="font-serif text-lg text-ink mb-2">Edebi Derinlik</h3>
+          <p className="text-sm text-stone-500 font-body">
+            Sadece sözcükler değil, arkasındaki anlam ve duygu yükü bizim için önemlidir.
+          </p>
+        </div>
+        <div className="text-center p-6 bg-white rounded-lg border border-secondary/20 hover:shadow-md transition-all">
+          <div className="flex justify-center mb-4">
+            <Feather className="text-accent" size={32} />
+          </div>
+          <h3 className="font-serif text-lg text-ink mb-2">Sade Estetik</h3>
+          <p className="text-sm text-stone-500 font-body">
+            Gözü yormayan, okuma zevkini artıran minimalist bir tasarım anlayışı.
+          </p>
+        </div>
+        <div className="text-center p-6 bg-white rounded-lg border border-secondary/20 hover:shadow-md transition-all">
+          <div className="flex justify-center mb-4">
+            <Coffee className="text-accent" size={32} />
+          </div>
+          <h3 className="font-serif text-lg text-ink mb-2">Huzurlu Ortam</h3>
+          <p className="text-sm text-stone-500 font-body">
+            Dijital kaosta bir nefes alma durağı. Sakinlik ve huzur önceliğimiz.
+          </p>
+        </div>
+      </section>
+
+      {/* Bottom Message */}
+      <section className="text-center py-10">
+        <p className="font-serif text-2xl text-ink leading-relaxed">
+          Siz de kaleminizi kağıda değdirin,<br />
+          bırakın mısralarınız gökyüzüne karışsın.
+        </p>
+      </section>
+
+    </div>
+  );
+};
+
+export default AboutPage;
