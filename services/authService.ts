@@ -7,27 +7,32 @@ const USER_INFO_KEY = 'beyazbulut_admin_user';
 interface LoginResult {
   success: boolean;
   message?: string;
+  debugInfo?: string;
 }
 
-// Login now attempts both secure RPC and direct table access to ensure admin can get in
 export const login = async (username: string, password: string): Promise<LoginResult> => {
   try {
-    // 1. Yöntem: Güvenli RPC Fonksiyonu (En İyisi)
+    console.log("Giriş deneniyor...", username);
+
+    // 1. Yöntem: Güvenli RPC Fonksiyonu
+    // Eğer kullanıcı 'login_admin' fonksiyonunu oluşturduysa bu en güvenli yoldur.
     const { data: rpcData, error: rpcError } = await supabase.rpc('login_admin', {
       input_username: username,
       input_password: password
     });
 
     if (!rpcError && rpcData && rpcData.success) {
+       console.log("RPC Giriş Başarılı");
        localStorage.setItem(AUTH_KEY, 'true');
        localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: rpcData.username, id: rpcData.id }));
        return { success: true };
     }
 
     // 2. Yöntem: Direkt Tablo Sorgusu (Yedek)
-    // Eğer kullanıcı RPC fonksiyonunu oluşturmadıysa veya RLS kapalıysa bu çalışır.
+    // Eğer RPC fonksiyonu yoksa veya hata verdiyse buraya düşer.
+    // DİKKAT: Bu yöntemin çalışması için Supabase panelinde 'admin_users' tablosunda RLS (Row Level Security) KAPALI olmalıdır.
     if (rpcError) {
-        console.warn("RPC Login başarısız, direkt tablo sorgusu deneniyor...", rpcError.message);
+        console.warn("RPC Login başarısız (SQL fonksiyonu eksik olabilir), direkt tablo sorgusu deneniyor...", rpcError.message);
         
         const { data: selectData, error: selectError } = await supabase
             .from('admin_users')
@@ -37,6 +42,7 @@ export const login = async (username: string, password: string): Promise<LoginRe
             .maybeSingle();
 
         if (!selectError && selectData) {
+            console.log("Direkt Tablo Girişi Başarılı");
             localStorage.setItem(AUTH_KEY, 'true');
             localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: selectData.username, id: selectData.id }));
             return { success: true };
@@ -44,16 +50,28 @@ export const login = async (username: string, password: string): Promise<LoginRe
         
         if (selectError) {
              console.error("Tablo sorgu hatası:", selectError);
-             return { success: false, message: `Veritabanı Hatası: ${selectError.message}` };
+             return { success: false, message: "Veritabanı bağlantı hatası.", debugInfo: selectError.message };
+        }
+
+        // Eğer hata yok ama veri de yoksa: Kullanıcı adı/şifre yanlış VEYA RLS engelliyor.
+        // Bunu anlamak için kullanıcı adını tek başına sorgulayalım (şifresiz).
+        const { data: userExists } = await supabase.from('admin_users').select('id').eq('username', username).maybeSingle();
+        
+        if (!userExists) {
+            // Kullanıcı hiç bulunamadı. Ya yok, ya da RLS engelliyor (çünkü RLS varsa boş döner).
+            return { 
+                success: false, 
+                message: "Kullanıcı bulunamadı veya erişim engellendi.", 
+                debugInfo: "Eğer kullanıcı adından eminseniz, Supabase panelinden 'admin_users' tablosunun RLS ayarını kapattığınızdan (Disable RLS) emin olun." 
+            };
         }
     }
 
-    // İki yöntem de çalıştı ama kullanıcı bulunamadıysa:
-    return { success: false, message: "Kullanıcı adı veya şifre hatalı." };
+    return { success: false, message: "Şifre hatalı." };
 
   } catch (err: any) {
     console.error("Login critical error:", err);
-    return { success: false, message: `Beklenmeyen Hata: ${err.message || 'Bilinmiyor'}` };
+    return { success: false, message: "Beklenmeyen bir hata oluştu.", debugInfo: err.message };
   }
 };
 

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle } from 'lucide-react';
+import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle, HelpCircle } from 'lucide-react';
 import { Poem } from '../types';
 import { getPoems, deletePoem, getCategories } from '../services/poemService';
 import { login, logout, isAuthenticated } from '../services/authService';
@@ -14,6 +14,7 @@ const AdminPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
   
   const [isAuth, setIsAuth] = useState(false);
   const [poems, setPoems] = useState<Poem[]>([]);
@@ -47,6 +48,7 @@ const AdminPage: React.FC = () => {
     e.preventDefault();
     setIsLoggingIn(true);
     setLoginError('');
+    setDebugInfo('');
     
     const result = await login(username, password);
     
@@ -57,6 +59,7 @@ const AdminPage: React.FC = () => {
       loadDashboardData();
     } else {
       setLoginError(result.message || 'Giriş başarısız.');
+      if (result.debugInfo) setDebugInfo(result.debugInfo);
     }
   };
 
@@ -92,17 +95,24 @@ const AdminPage: React.FC = () => {
 
   if (!isAuth) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center animate-fade-in">
-        <form onSubmit={handleLogin} className="bg-white p-10 rounded-sm shadow-xl border border-secondary/20 w-full max-w-md space-y-6">
+      <div className="min-h-[60vh] flex items-center justify-center animate-fade-in px-4">
+        <form onSubmit={handleLogin} className="bg-white p-8 md:p-10 rounded-sm shadow-xl border border-secondary/20 w-full max-w-md space-y-6">
           <div className="text-center">
             <h2 className="font-serif text-2xl text-ink">Yönetici Girişi</h2>
             <div className="h-0.5 w-12 bg-accent mx-auto mt-4"></div>
           </div>
           
           {loginError && (
-            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-sm text-sm flex items-start gap-2">
-              <AlertCircle size={16} className="shrink-0 mt-0.5" />
-              <span>{loginError}</span>
+            <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-sm text-sm space-y-2">
+              <div className="flex items-center gap-2 font-bold">
+                 <AlertCircle size={16} />
+                 <span>{loginError}</span>
+              </div>
+              {debugInfo && (
+                <div className="text-xs text-red-500 mt-2 p-2 bg-white/50 rounded border border-red-100">
+                   <strong>İpucu:</strong> {debugInfo}
+                </div>
+              )}
             </div>
           )}
           
@@ -145,6 +155,12 @@ const AdminPage: React.FC = () => {
           >
             {isLoggingIn ? <Loader2 size={16} className="animate-spin" /> : 'Giriş Yap'}
           </button>
+          
+          <div className="pt-4 border-t border-secondary/10 text-center">
+             <p className="text-xs text-stone-400 flex items-center justify-center gap-1">
+               <HelpCircle size={12} /> Varsayılan: admin / admin123
+             </p>
+          </div>
         </form>
       </div>
     );

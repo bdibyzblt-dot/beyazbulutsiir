@@ -1,7 +1,22 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
+// Helper for env vars
+const getEnv = (key: string) => {
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    // @ts-ignore
+    return import.meta.env[key];
+  }
+  // @ts-ignore
+  if (typeof process !== 'undefined' && process.env) {
+    // @ts-ignore
+    return process.env[key];
+  }
+  return '';
+};
+
+const apiKey = getEnv('VITE_GEMINI_KEY') || getEnv('API_KEY') || '';
 
 // Initialize the client safely
 let ai: GoogleGenAI | null = null;
@@ -11,7 +26,7 @@ if (apiKey) {
 
 export const generatePoemWithAI = async (promptInput: string, isCategory: boolean = false): Promise<{ title: string; content: string } | null> => {
   if (!ai) {
-    console.error("API Key not found");
+    console.error("API Key not found (VITE_GEMINI_KEY)");
     return null;
   }
 

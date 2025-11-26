@@ -1,16 +1,29 @@
+
 import { createClient } from '@supabase/supabase-js';
 
-// Retrieve env vars directly
-const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-const supabaseKey = process.env.VITE_SUPABASE_KEY || '';
+// Helper to safely get env vars in both Vite (import.meta.env) and Standard (process.env) environments
+const getEnv = (key: string) => {
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    // @ts-ignore
+    return import.meta.env[key];
+  }
+  // @ts-ignore
+  if (typeof process !== 'undefined' && process.env) {
+    // @ts-ignore
+    return process.env[key];
+  }
+  return '';
+};
 
-// Create client independently of whether keys exist initially to prevent build crashes,
-// but operations will fail gracefully if keys are missing.
+const supabaseUrl = getEnv('VITE_SUPABASE_URL');
+const supabaseKey = getEnv('VITE_SUPABASE_KEY');
+
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co', 
   supabaseKey || 'placeholder'
 );
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn('Supabase keys are missing in environment variables. Database features will not work.');
+  console.warn('Supabase keys are missing. Authentication will fail. Check VITE_SUPABASE_URL and VITE_SUPABASE_KEY.');
 }
