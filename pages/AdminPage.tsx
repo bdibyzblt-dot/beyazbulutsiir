@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle, HelpCircle, Users } from 'lucide-react';
+import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle, HelpCircle, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Poem } from '../types';
 import { getPoems, deletePoem, getCategories } from '../services/poemService';
 import { login, logout, isAuthenticated, getCurrentUser } from '../services/authService';
@@ -22,8 +22,10 @@ const AdminPage: React.FC = () => {
   const [stats, setStats] = useState({ poemCount: 0, categoryCount: 0 });
   const [loading, setLoading] = useState(false);
   
-  // Search State
+  // Search & Pagination State
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 15;
 
   useEffect(() => {
     const authStatus = isAuthenticated();
@@ -33,6 +35,11 @@ const AdminPage: React.FC = () => {
       loadDashboardData();
     }
   }, []);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -96,6 +103,19 @@ const AdminPage: React.FC = () => {
   const filteredPoems = poems.filter(poem => 
     poem.title.toLocaleLowerCase('tr-TR').includes(searchTerm.toLocaleLowerCase('tr-TR'))
   );
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredPoems.length / ITEMS_PER_PAGE);
+  const currentPoems = filteredPoems.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   if (!isAuth) {
     return (
@@ -261,59 +281,87 @@ const AdminPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-sm border border-secondary/20 shadow-sm overflow-hidden min-h-[300px]">
-                <table className="w-full text-left">
-                <thead className="bg-secondary/5 border-b border-secondary/20">
-                    <tr>
-                        <th className="p-4 font-serif text-ink font-medium">Başlık</th>
-                        <th className="p-4 font-serif text-ink font-medium">Kategori</th>
-                        <th className="p-4 font-serif text-ink font-medium">Tarih</th>
-                        <th className="p-4 font-serif text-ink font-medium text-right">İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-secondary/10">
-                    {filteredPoems.map(poem => (
-                        <tr 
-                            key={poem.id} 
-                            className={`transition-colors relative z-0 ${searchTerm ? 'bg-stone-100' : 'hover:bg-secondary/5'}`}
-                        >
-                            <td className="p-4">
-                            <div className="font-medium text-ink">{poem.title}</div>
-                            <div className="text-xs text-stone-400 truncate max-w-[200px]">{poem.author}</div>
-                            </td>
-                            <td className="p-4">
-                            <span className="text-[10px] uppercase font-bold text-accent border border-accent/20 px-2 py-0.5 rounded-sm">
-                                {poem.category}
-                            </span>
-                            </td>
-                            <td className="p-4 text-sm text-stone-500">{poem.date}</td>
-                            <td className="p-4 text-right space-x-2 relative z-10">
-                            <button 
-                                onClick={(e) => handleEditConfirm(e, poem.id, poem.title)}
-                                className="inline-block p-2 text-blue-400 hover:bg-blue-50 rounded-sm transition-colors cursor-pointer relative z-20" 
-                                title="Düzenle"
-                            >
-                                <Edit size={16} />
-                            </button>
-                            <button 
-                                onClick={(e) => handleDeletePoem(e, poem.id, poem.title)} 
-                                className="inline-block p-2 text-red-400 hover:bg-red-50 rounded-sm transition-colors cursor-pointer relative z-20" 
-                                title="Sil"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                            </td>
-                        </tr>
-                    ))}
-                    {filteredPoems.length === 0 && (
+            <div className="bg-white rounded-sm border border-secondary/20 shadow-sm overflow-hidden min-h-[300px] flex flex-col">
+                {/* Responsive Table Wrapper */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left whitespace-nowrap md:whitespace-normal">
+                    <thead className="bg-secondary/5 border-b border-secondary/20">
                         <tr>
-                            <td colSpan={4} className="p-8 text-center text-stone-400 italic">
-                            {searchTerm ? `"${searchTerm}" aramasına uygun şiir bulunamadı.` : 'Henüz kütüphanede şiir yok.'}
-                            </td>
+                            <th className="p-4 font-serif text-ink font-medium">Başlık</th>
+                            <th className="p-4 font-serif text-ink font-medium">Kategori</th>
+                            <th className="p-4 font-serif text-ink font-medium hidden md:table-cell">Tarih</th>
+                            <th className="p-4 font-serif text-ink font-medium text-right">İşlemler</th>
                         </tr>
-                    )}
-                </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-secondary/10">
+                        {currentPoems.map(poem => (
+                            <tr 
+                                key={poem.id} 
+                                className={`transition-colors relative z-0 ${searchTerm ? 'bg-stone-100' : 'hover:bg-secondary/5'}`}
+                            >
+                                <td className="p-4">
+                                <div className="font-medium text-ink truncate max-w-[150px] md:max-w-none">{poem.title}</div>
+                                <div className="text-xs text-stone-400 truncate max-w-[150px] md:max-w-[200px]">{poem.author}</div>
+                                </td>
+                                <td className="p-4">
+                                <span className="text-[10px] uppercase font-bold text-accent border border-accent/20 px-2 py-0.5 rounded-sm">
+                                    {poem.category}
+                                </span>
+                                </td>
+                                <td className="p-4 text-sm text-stone-500 hidden md:table-cell">{poem.date}</td>
+                                <td className="p-4 text-right space-x-2 relative z-10">
+                                <button 
+                                    onClick={(e) => handleEditConfirm(e, poem.id, poem.title)}
+                                    className="inline-block p-2 text-blue-400 hover:bg-blue-50 rounded-sm transition-colors cursor-pointer relative z-20" 
+                                    title="Düzenle"
+                                >
+                                    <Edit size={16} />
+                                </button>
+                                <button 
+                                    onClick={(e) => handleDeletePoem(e, poem.id, poem.title)} 
+                                    className="inline-block p-2 text-red-400 hover:bg-red-50 rounded-sm transition-colors cursor-pointer relative z-20" 
+                                    title="Sil"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                                </td>
+                            </tr>
+                        ))}
+                        {currentPoems.length === 0 && (
+                            <tr>
+                                <td colSpan={4} className="p-8 text-center text-stone-400 italic">
+                                {searchTerm ? `"${searchTerm}" aramasına uygun şiir bulunamadı.` : 'Henüz kütüphanede şiir yok.'}
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="border-t border-secondary/10 p-4 flex items-center justify-between mt-auto bg-stone-50/50">
+                     <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="p-2 border border-secondary/20 rounded-sm hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed text-stone-500"
+                     >
+                        <ChevronLeft size={16} />
+                     </button>
+                     
+                     <span className="text-xs text-stone-500 font-sans tracking-widest">
+                        Sayfa <span className="font-bold text-ink">{currentPage}</span> / {totalPages}
+                     </span>
+
+                     <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="p-2 border border-secondary/20 rounded-sm hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed text-stone-500"
+                     >
+                        <ChevronRight size={16} />
+                     </button>
+                  </div>
+                )}
             </div>
         </div>
         </>
