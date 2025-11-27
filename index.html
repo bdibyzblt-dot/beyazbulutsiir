@@ -18,16 +18,13 @@
               cinematic: ['"Cinzel"', 'serif'],
             },
             colors: {
-              background: '#F9F7F2', // Warm Cream / Paper
-              surface: '#FFFFFF',    // Pure White
-              paper: '#F2F0E9',      // Slightly darker cream for contrast
-              ink: '#4A4A4A',        // Soft Dark Grey (Charcoal)
-              accent: '#7DA5C8',     // Pastel Blue
-              secondary: '#D4C5B0',  // Beige/Sand
-              subtle: '#9CA3AF',     // Cool Grey
-            },
-            backgroundImage: {
-              'vignette': 'radial-gradient(circle, rgba(255,255,255,0) 0%, rgba(249,247,242,1) 100%)',
+              background: '#F9F7F2',
+              surface: '#FFFFFF',
+              paper: '#F2F0E9',
+              ink: '#4A4A4A',
+              accent: '#7DA5C8',
+              secondary: '#D4C5B0',
+              subtle: '#9CA3AF',
             },
             animation: {
               'fade-in': 'fadeIn 1s ease-out forwards',
@@ -46,10 +43,9 @@
       body {
         background-color: #F9F7F2;
         color: #4A4A4A;
-        overflow-x: hidden; /* Prevent horizontal scroll causing navbar layout shifts */
+        overflow-x: hidden;
         width: 100%;
       }
-      /* Film grain texture - subtle for light mode */
       .bg-texture {
         position: fixed;
         top: 0;
@@ -62,19 +58,17 @@
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
         filter: contrast(120%) brightness(100%);
       }
-      
-      /* Soft Shadows */
       .cinematic-shadow {
         box-shadow: 0 10px 30px -10px rgba(74, 74, 74, 0.1);
       }
     </style>
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react-helmet-async": "https://aistudiocdn.com/react-helmet-async@^2.0.5",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
