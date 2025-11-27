@@ -13,6 +13,9 @@ import SettingsManager from './pages/admin/SettingsManager';
 import CategoryPage from './pages/CategoryPage';
 import ChangePassword from './pages/admin/ChangePassword';
 import UserManager from './pages/admin/UserManager';
+import SeoManager from './pages/admin/SeoManager';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 
 const App: React.FC = () => {
   return (
@@ -24,6 +27,10 @@ const App: React.FC = () => {
           <Route path="/poem/:id" element={<PoemDetailPage />} />
           <Route path="/category/:categoryName" element={<CategoryPage />} />
           
+          {/* Public Auth Routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/admin/categories" element={<CategoryManager />} />
@@ -31,8 +38,9 @@ const App: React.FC = () => {
           <Route path="/admin/new" element={<PoemEditor />} />
           <Route path="/admin/edit/:id" element={<PoemEditor />} />
           <Route path="/admin/settings" element={<SettingsManager />} />
+          <Route path="/admin/seo" element={<SeoManager />} />
           <Route path="/admin/profile" element={<ChangePassword />} />
-          <Route path="/admin/password" element={<ChangePassword />} /> {/* Legacy route support */}
+          <Route path="/admin/password" element={<ChangePassword />} /> 
           <Route path="/admin/users" element={<UserManager />} />
         </Routes>
       </Layout>

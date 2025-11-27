@@ -22,7 +22,21 @@ export interface SiteSettings {
   aboutQuote: string;
   aboutTextPrimary: string;
   aboutTextSecondary: string;
-  geminiApiKey?: string; // New field for dynamic AI Key
+  geminiApiKey?: string;
+}
+
+export interface SeoSettings {
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  ogImageUrl: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  username: string;
+  fullName: string;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = ['Aşk', 'Hüzün', 'Doğa', 'Özgürlük', 'Nostalji'];

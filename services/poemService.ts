@@ -31,27 +31,15 @@ export const getPoemById = async (id: string): Promise<Poem | undefined> => {
 };
 
 export const savePoem = async (poem: Poem): Promise<void> => {
-  // Logic Fix:
-  // If ID is very long (timestamp string from frontend) -> It's NEW -> Insert without ID
-  // If ID is short/number (from DB) -> It's EXISTING -> Update with ID
-  
-  // We check if the ID looks like a timestamp (e.g., "1709..." which is 13 chars)
   const isFrontendId = poem.id.length > 10; 
 
   if (isFrontendId) {
-    // INSERT NEW: We MUST remove the 'id' field so Supabase auto-generates it.
     const { id, ...poemData } = poem;
-    
     const { error } = await supabase
       .from('poems')
       .insert([poemData]);
-      
-    if (error) {
-        console.error("Insert Error:", error);
-        throw error;
-    }
+    if (error) throw error;
   } else {
-    // UPDATE EXISTING
     const { error } = await supabase
       .from('poems')
       .update({
@@ -63,11 +51,7 @@ export const savePoem = async (poem: Poem): Promise<void> => {
           likes: poem.likes
       })
       .eq('id', poem.id);
-
-    if (error) {
-        console.error("Update Error:", error);
-        throw error;
-    }
+    if (error) throw error;
   }
 };
 
@@ -76,29 +60,67 @@ export const deletePoem = async (id: string): Promise<void> => {
     .from('poems')
     .delete()
     .eq('id', id);
-
   if (error) console.error("Delete error", error);
 };
 
-export const toggleLike = async (id: string): Promise<number> => {
-  const { data: poem, error: fetchError } = await supabase
-    .from('poems')
-    .select('likes')
-    .eq('id', id)
-    .single();
+// --- Gelişmiş Beğeni Sistemi ---
+export const toggleLike = async (poemId: string): Promise<number> => {
+  // 1. Check if user is logged in
+  const { data: { user } } = await supabase.auth.getUser();
   
-  if (fetchError || !poem) return 0;
+  if (!user) {
+    alert("Beğenmek için giriş yapmalısınız.");
+    // Return current count without changing
+    const { data } = await supabase.from('poems').select('likes').eq('id', poemId).single();
+    return data?.likes || 0;
+  }
 
-  const newLikes = (poem.likes || 0) + 1;
+  // 2. Check if already liked
+  const { data: existingLike } = await supabase
+    .from('poem_likes')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('poem_id', poemId)
+    .maybeSingle();
 
-  const { error: updateError } = await supabase
-    .from('poems')
-    .update({ likes: newLikes })
-    .eq('id', id);
+  if (existingLike) {
+    // UNLIKE: Remove from poem_likes
+    await supabase.from('poem_likes').delete().eq('user_id', user.id).eq('poem_id', poemId);
+  } else {
+    // LIKE: Insert into poem_likes
+    await supabase.from('poem_likes').insert([{ user_id: user.id, poem_id: poemId }]);
+  }
 
-  if (updateError) return poem.likes;
+  // 3. Recalculate total likes from table
+  const { count } = await supabase
+    .from('poem_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('poem_id', poemId);
   
-  return newLikes;
+  const newCount = count || 0;
+
+  // 4. Update the poems table cache for display performance
+  await supabase
+    .from('poems')
+    .update({ likes: newCount })
+    .eq('id', poemId);
+  
+  return newCount;
+};
+
+// Check if current user liked a poem
+export const checkIsLiked = async (poemId: string): Promise<boolean> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data } = await supabase
+    .from('poem_likes')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('poem_id', poemId)
+    .maybeSingle();
+  
+  return !!data;
 };
 
 // Category Management
@@ -112,7 +134,6 @@ export const getCategories = async (): Promise<Category[]> => {
     console.error('Error fetching categories:', error);
     return [];
   }
-  
   return data.map((item: any) => item.name);
 };
 
@@ -136,28 +157,25 @@ export const updateCategory = async (oldName: string, newName: string): Promise<
   
   if (catError) return false;
 
-  const { error: poemError } = await supabase
+  await supabase
     .from('poems')
     .update({ category: newName })
     .eq('category', oldName);
 
-  return !poemError;
+  return true;
 };
 
 export const deleteCategory = async (categoryName: string): Promise<void> => {
-  // Ensure fallback category exists
   const cats = await getCategories();
   if (!cats.includes('Kategorisiz')) {
      await addCategory('Kategorisiz');
   }
 
-  // Move poems
   await supabase
     .from('poems')
     .update({ category: 'Kategorisiz' })
     .eq('category', categoryName);
 
-  // Delete category
   const { error } = await supabase
     .from('categories')
     .delete()

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle, HelpCircle, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, Plus, List, Sparkles, Tag, Edit, Trash2, Search, Settings, Loader2, Lock, User, AlertCircle, HelpCircle, Users, ChevronLeft, ChevronRight, BarChart } from 'lucide-react';
 import { Poem } from '../types';
 import { getPoems, deletePoem, getCategories } from '../services/poemService';
 import { login, logout, isAuthenticated, getCurrentUser } from '../services/authService';
@@ -25,7 +25,7 @@ const AdminPage: React.FC = () => {
   // Search & Pagination State
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 15;
+  const ITEMS_PER_PAGE = 5;
 
   useEffect(() => {
     const authStatus = isAuthenticated();
@@ -36,7 +36,6 @@ const AdminPage: React.FC = () => {
     }
   }, []);
 
-  // Reset pagination when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
@@ -99,12 +98,10 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Filter poems based on search term
   const filteredPoems = poems.filter(poem => 
     poem.title.toLocaleLowerCase('tr-TR').includes(searchTerm.toLocaleLowerCase('tr-TR'))
   );
 
-  // Pagination Logic
   const totalPages = Math.ceil(filteredPoems.length / ITEMS_PER_PAGE);
   const currentPoems = filteredPoems.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -213,7 +210,6 @@ const AdminPage: React.FC = () => {
         <>
         {/* Stats & Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Stat Cards */}
             <div className="bg-white p-6 rounded-sm border border-secondary/20 shadow-sm">
                 <h3 className="text-stone-400 text-xs uppercase tracking-widest mb-2">Toplam Şiir</h3>
                 <p className="text-4xl font-serif text-ink">{stats.poemCount}</p>
@@ -223,14 +219,11 @@ const AdminPage: React.FC = () => {
                 <p className="text-4xl font-serif text-ink">{stats.categoryCount}</p>
             </div>
 
-            {/* AI Action */}
             <Link to="/admin/ai" className="bg-gradient-to-br from-accent/10 to-accent/5 p-6 rounded-sm border border-accent/20 hover:border-accent/50 transition-all group flex flex-col justify-center items-center text-center cursor-pointer">
                 <Sparkles className="text-accent mb-2 group-hover:scale-110 transition-transform" size={24} />
                 <span className="font-serif text-ink font-medium">Yapay Zeka ile Üret</span>
-                <span className="text-[10px] text-stone-500 mt-1">Hızlı şiir oluştur</span>
             </Link>
             
-            {/* Settings & Tools */}
             <div className="flex flex-col gap-2">
                 <div className="flex gap-2 flex-1">
                     <Link to="/admin/categories" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex flex-col items-center justify-center gap-1 text-center cursor-pointer flex-1">
@@ -239,13 +232,13 @@ const AdminPage: React.FC = () => {
                     </Link>
                     <Link to="/admin/settings" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex flex-col items-center justify-center gap-1 text-center cursor-pointer flex-1">
                         <Settings className="text-stone-400 group-hover:text-accent transition-colors" size={16} />
-                        <span className="font-serif text-ink text-xs">Ayarlar</span>
+                        <span className="font-serif text-ink text-xs">Genel Ayarlar</span>
                     </Link>
                 </div>
                 <div className="flex gap-2 flex-1">
-                  <Link to="/admin/profile" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
-                      <User className="text-stone-400 group-hover:text-accent transition-colors" size={14} />
-                      <span className="font-serif text-ink text-xs">Profil</span>
+                  <Link to="/admin/seo" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
+                      <BarChart className="text-stone-400 group-hover:text-accent transition-colors" size={14} />
+                      <span className="font-serif text-ink text-xs">SEO</span>
                   </Link>
                   <Link to="/admin/users" className="bg-white p-2 rounded-sm border border-secondary/20 hover:border-accent/30 transition-all group flex items-center justify-center gap-2 text-center cursor-pointer flex-1">
                       <Users className="text-stone-400 group-hover:text-accent transition-colors" size={14} />
@@ -255,7 +248,6 @@ const AdminPage: React.FC = () => {
             </div>
         </div>
 
-        {/* Main Content Area */}
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-end gap-4">
                 <h3 className="font-serif text-xl text-ink flex items-center gap-2">
@@ -263,7 +255,6 @@ const AdminPage: React.FC = () => {
                 </h3>
                 
                 <div className="flex gap-4 w-full md:w-auto">
-                {/* Search Bar */}
                 <div className="relative flex-grow md:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
                     <input 
@@ -282,7 +273,6 @@ const AdminPage: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-sm border border-secondary/20 shadow-sm overflow-hidden min-h-[300px] flex flex-col">
-                {/* Responsive Table Wrapper */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-left whitespace-nowrap md:whitespace-normal">
                     <thead className="bg-secondary/5 border-b border-secondary/20">
@@ -338,7 +328,6 @@ const AdminPage: React.FC = () => {
                   </table>
                 </div>
 
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div className="border-t border-secondary/10 p-4 flex items-center justify-between mt-auto bg-stone-50/50">
                      <button

@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Tag, Loader2 } from 'lucide-react';
+import { ArrowLeft, Tag, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Poem } from '../types';
 import { getPoems } from '../services/poemService';
 import PoemCard from '../components/PoemCard';
@@ -9,6 +10,10 @@ const CategoryPage: React.FC = () => {
   const { categoryName } = useParams<{ categoryName: string }>();
   const [poems, setPoems] = useState<Poem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 4;
 
   useEffect(() => {
     const fetch = async () => {
@@ -17,12 +22,26 @@ const CategoryPage: React.FC = () => {
             const allPoems = await getPoems();
             const filtered = allPoems.filter(p => p.category === categoryName);
             setPoems(filtered);
+            setCurrentPage(1); // Reset page on category change
         }
         setIsLoading(false);
     };
     fetch();
     window.scrollTo(0, 0);
   }, [categoryName]);
+
+  const totalPages = Math.ceil(poems.length / ITEMS_PER_PAGE);
+  const currentPoems = poems.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -58,8 +77,8 @@ const CategoryPage: React.FC = () => {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-        {poems.length > 0 ? (
-          poems.map(poem => (
+        {currentPoems.length > 0 ? (
+          currentPoems.map(poem => (
             <PoemCard key={poem.id} poem={poem} />
           ))
         ) : (
@@ -69,6 +88,43 @@ const CategoryPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 pt-8">
+          <button 
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-3 border border-secondary/30 rounded-full text-stone-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          
+          <div className="flex gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`w-10 h-10 flex items-center justify-center font-serif text-sm border rounded-full transition-all ${
+                  currentPage === page 
+                    ? 'bg-accent border-accent text-white shadow-md' 
+                    : 'bg-transparent border-secondary/30 text-stone-500 hover:border-accent/50 hover:bg-white'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button 
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-3 border border-secondary/30 rounded-full text-stone-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
 
     </div>
   );

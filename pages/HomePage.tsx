@@ -62,19 +62,19 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-24 pb-20 animate-fade-in">
+    <div className="space-y-24 pb-20 animate-fade-in w-full">
       
-      {/* Hero Section - Light & Airy */}
-      <section className="text-center py-20 md:py-32 space-y-8 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/10 rounded-full blur-3xl -z-10"></div>
+      {/* Hero Section - Light & Airy - Added overflow-hidden to prevent mobile scroll issues */}
+      <section className="text-center py-20 md:py-32 space-y-8 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
         
-        <div className="inline-flex items-center justify-center p-4 rounded-full border border-secondary/20 bg-white/40 backdrop-blur-sm mb-6 shadow-sm">
+        <div className="inline-flex items-center justify-center p-4 rounded-full border border-secondary/20 bg-white/40 backdrop-blur-sm mb-6 shadow-sm relative z-10">
            <Feather className="text-accent" size={24} />
         </div>
-        <h2 className="text-5xl md:text-7xl font-serif text-ink leading-tight tracking-wide">
+        <h2 className="text-5xl md:text-7xl font-serif text-ink leading-tight tracking-wide relative z-10">
           {settings.heroTitle} <span className="text-accent italic">{settings.heroHighlight}</span>
         </h2>
-        <p className="text-lg md:text-xl text-stone-500 max-w-2xl mx-auto font-body leading-relaxed">
+        <p className="text-lg md:text-xl text-stone-500 max-w-2xl mx-auto font-body leading-relaxed relative z-10">
           {settings.heroSubtitle}
         </p>
       </section>

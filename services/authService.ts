@@ -1,6 +1,8 @@
 
 import { supabase } from './supabaseClient';
+import { UserProfile } from '../types';
 
+// --- ADMIN AUTH (Custom Table) ---
 const AUTH_KEY = 'beyazbulut_auth_token';
 const USER_INFO_KEY = 'beyazbulut_admin_user';
 
@@ -17,25 +19,18 @@ export interface AdminUser {
 
 export const login = async (username: string, password: string): Promise<LoginResult> => {
   try {
-    console.log("Giriş deneniyor...", username);
-
-    // 1. Yöntem: Güvenli RPC Fonksiyonu
     const { data: rpcData, error: rpcError } = await supabase.rpc('login_admin', {
       input_username: username,
       input_password: password
     });
 
     if (!rpcError && rpcData && rpcData.success) {
-       console.log("RPC Giriş Başarılı");
        localStorage.setItem(AUTH_KEY, 'true');
        localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: rpcData.username, id: rpcData.id }));
        return { success: true };
     }
 
-    // 2. Yöntem: Direkt Tablo Sorgusu (Yedek)
     if (rpcError) {
-        console.warn("RPC Login başarısız, direkt tablo sorgusu deneniyor...", rpcError.message);
-        
         const { data: selectData, error: selectError } = await supabase
             .from('admin_users')
             .select('*')
@@ -44,32 +39,15 @@ export const login = async (username: string, password: string): Promise<LoginRe
             .maybeSingle();
 
         if (!selectError && selectData) {
-            console.log("Direkt Tablo Girişi Başarılı");
             localStorage.setItem(AUTH_KEY, 'true');
             localStorage.setItem(USER_INFO_KEY, JSON.stringify({ username: selectData.username, id: selectData.id }));
             return { success: true };
         }
-        
-        if (selectError) {
-             return { success: false, message: "Veritabanı bağlantı hatası.", debugInfo: selectError.message };
-        }
-
-        const { data: userExists } = await supabase.from('admin_users').select('id').eq('username', username).maybeSingle();
-        
-        if (!userExists) {
-            return { 
-                success: false, 
-                message: "Kullanıcı bulunamadı veya erişim engellendi.", 
-                debugInfo: "Eğer kullanıcı adından eminseniz, Supabase panelinden 'admin_users' tablosunun RLS ayarını kapattığınızdan (Disable RLS) emin olun." 
-            };
-        }
     }
-
-    return { success: false, message: "Şifre hatalı." };
+    return { success: false, message: "Şifre hatalı veya kullanıcı bulunamadı." };
 
   } catch (err: any) {
-    console.error("Login critical error:", err);
-    return { success: false, message: "Beklenmeyen bir hata oluştu.", debugInfo: err.message };
+    return { success: false, message: "Beklenmeyen hata.", debugInfo: err.message };
   }
 };
 
@@ -87,70 +65,79 @@ export const getCurrentUser = () => {
   return userStr ? JSON.parse(userStr) : null;
 };
 
-// --- USER MANAGEMENT FUNCTIONS ---
+// --- PUBLIC AUTH (Supabase Native) ---
 
-export const getAllAdmins = async (): Promise<AdminUser[]> => {
-  const { data, error } = await supabase
-    .from('admin_users')
-    .select('id, username')
-    .order('id');
+export const signUpPublic = async (email: string, password: string, fullName: string, username: string): Promise<{success: boolean, message?: string}> => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+        username: username
+      }
+    }
+  });
+
+  if (error) return { success: false, message: error.message };
+  return { success: true };
+};
+
+export const signInPublic = async (email: string, password: string): Promise<{success: boolean, message?: string}> => {
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+  if (error) return { success: false, message: error.message };
+  return { success: true };
+};
+
+export const signOutPublic = async () => {
+  await supabase.auth.signOut();
+};
+
+export const getPublicUser = async (): Promise<UserProfile | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
   
-  if (error) {
-    console.error("Fetch admins error:", error);
-    return [];
-  }
+  return {
+    id: user.id,
+    email: user.email || '',
+    username: user.user_metadata?.username || 'Kullanıcı',
+    fullName: user.user_metadata?.full_name || ''
+  };
+};
+
+// --- ADMIN USER MANAGEMENT ---
+export const getAllAdmins = async (): Promise<AdminUser[]> => {
+  const { data, error } = await supabase.from('admin_users').select('id, username').order('id');
+  if (error) return [];
   return data as AdminUser[];
 };
 
 export const addAdmin = async (username: string, password: string): Promise<{success: boolean, message?: string}> => {
-  // Check if exists
   const { data: existing } = await supabase.from('admin_users').select('id').eq('username', username).maybeSingle();
   if (existing) return { success: false, message: "Bu kullanıcı adı zaten kullanılıyor." };
-
-  const { error } = await supabase
-    .from('admin_users')
-    .insert([{ username, password }]);
-
+  const { error } = await supabase.from('admin_users').insert([{ username, password }]);
   if (error) return { success: false, message: error.message };
   return { success: true };
 };
 
 export const deleteAdmin = async (id: number): Promise<boolean> => {
   const currentUser = getCurrentUser();
-  if (currentUser && currentUser.id === id) {
-    alert("Kendinizi silemezsiniz!");
-    return false;
-  }
-
-  const { error } = await supabase
-    .from('admin_users')
-    .delete()
-    .eq('id', id);
-
+  if (currentUser && currentUser.id === id) return false;
+  const { error } = await supabase.from('admin_users').delete().eq('id', id);
   return !error;
 };
 
 export const updateAdminProfile = async (currentUsername: string, newUsername: string, newPassword?: string): Promise<boolean> => {
   const updates: any = { username: newUsername };
-  if (newPassword && newPassword.length > 0) {
-    updates.password = newPassword;
-  }
-
-  const { error } = await supabase
-    .from('admin_users')
-    .update(updates)
-    .eq('username', currentUsername);
-
-  if (error) {
-    console.error("Update profile error:", error);
-    return false;
-  }
-
-  // Update local storage if username changed
+  if (newPassword && newPassword.length > 0) updates.password = newPassword;
+  const { error } = await supabase.from('admin_users').update(updates).eq('username', currentUsername);
+  if (error) return false;
   const currentUser = getCurrentUser();
   if (currentUser && currentUser.username === currentUsername) {
      localStorage.setItem(USER_INFO_KEY, JSON.stringify({ ...currentUser, username: newUsername }));
   }
-
   return true;
 };

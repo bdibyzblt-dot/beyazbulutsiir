@@ -2,7 +2,7 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>BEYAZBULUT - Şiir Platformu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,6 +46,8 @@
       body {
         background-color: #F9F7F2;
         color: #4A4A4A;
+        overflow-x: hidden; /* Prevent horizontal scroll causing navbar layout shifts */
+        width: 100%;
       }
       /* Film grain texture - subtle for light mode */
       .bg-texture {
@@ -75,7 +77,8 @@
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+    "react-helmet-async": "https://esm.sh/react-helmet-async@2.0.4"
   }
 }
 </script>
